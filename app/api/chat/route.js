@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+export async function POST(request) {
   try {
     const { message } = await request.json();
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'مفتاح GEMINI_API_KEY غير معرف في متغيرات البيئة على Render' },
+        { error: 'مفتاح GEMINI_API_KEY غير معرف على Render' },
         { status: 500 }
       );
     }
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'لم يتم استلام رد من النموذج.';
     return NextResponse.json({ reply });
 
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
       { error: error?.message || 'حدث خطأ غير متوقع في السيرفر' },
       { status: 500 }
