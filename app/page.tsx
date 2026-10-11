@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Fuse from 'fuse.js';
-import { GoogleGenAI } from '@google/genai';
 
 export default function Home() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
@@ -21,7 +20,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string }>>([
     { 
       sender: 'ai', 
-      text: 'أهلاً بك! أنا مساعد Shopando الذكي المتصل بـ Google Gemini (gemini-3.8-flash). يمكنك سؤالي عن أي منتج أو نظام برمجي وسأجيبك فوراً.' 
+      text: 'أهلاً بك! أنا مساعد Shopando الذكي المتصل بـ Google Gemini عبر سيرفر Render الآمن. يمكنك سؤالي عن أي منتج أو نظام برمجي وسأجيبك فوراً.' 
     }
   ]);
 
@@ -151,7 +150,7 @@ export default function Home() {
       });
   }, [searchQuery, selectedCategory, maxPriceFilter, sortBy, lang, initialProducts, fuse]);
 
-  // دالة إرسال الرسائل لمساعد جوجل جمناي مباشرة من المتصفح (عبر الـ VPN) باستخدام gemini-3.8-flash
+  // دالة إرسال الرسائل عبر مسار الخادم الداخلي الآمن (/api/chat)
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
@@ -161,37 +160,27 @@ export default function Home() {
     setChatInput('');
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      if (!apiKey) {
-        setMessages(prev => [...prev, { 
-          sender: 'ai', 
-          text: 'عذراً، يرجى التأكد من إضافة NEXT_PUBLIC_GEMINI_API_KEY في ملف .env.local وإعادة تشغيل السيرفر.' 
-        }]);
-        return;
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
-
-      const prompt = `
-        أنت مساعد ذكي ولطيف لمتجر Shopando الإلكتروني الشامل والمطور بواسطة شركة HEADIX.
-        أجب على سؤال المستخدم بشكل طبيعي، واشرح له مواصفات المنتجات والأنظمة المتاحة في المتجر.
-        سؤال المستخدم: "${userText}"
-      `;
-
-      // استخدام النموذج الحديث المطلوب بالخطأ: gemini-3.8-flash
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: prompt,
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userText }),
       });
 
-      const replyText = response.text || 'لم يتم استلام رد من النموذج.';
-      setMessages(prev => [...prev, { sender: 'ai', text: replyText }]);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'حدث خطأ في الاتصال بالخادم');
+      }
+
+      setMessages(prev => [...prev, { sender: 'ai', text: data.reply }]);
 
     } catch (err: any) {
       console.error(err);
       setMessages(prev => [...prev, { 
         sender: 'ai', 
-        text: `تعذر الاتصال: ${err?.message || 'تأكد من عمل الـ VPN في المتصفح'}` 
+        text: `تعذر الاتصال: ${err?.message || 'تأكد من إعدادات المفتاح على السيرفر'}` 
       }]);
     }
   };
@@ -212,7 +201,7 @@ export default function Home() {
       about: 'من نحن',
       cart: 'السلة',
       login: 'تسجيل الدخول',
-      heroTag: 'مساعد ذكي عائم متصل بـ Google Gemini مباشرة',
+      heroTag: 'مساعد ذكي عائم متصل بـ Google Gemini عبر السيرفر',
       heroTitle1: 'تجوّل في عالم',
       heroDesc: 'منصة تسوق شاملة تجمع بين المنتجات المادية والعصرية، والحلول البرمجية والأنظمة الذكية بأفضل الأسعار وأعلى جودة.',
       shopNow: 'ابدأ التسوق الآن',
@@ -254,7 +243,7 @@ export default function Home() {
       about: 'About Us',
       cart: 'Cart',
       login: 'Sign In',
-      heroTag: 'Powered by Direct Client-side Google Gemini',
+      heroTag: 'Powered by Server-side Google Gemini Proxy',
       heroTitle1: 'Explore the World of',
       heroDesc: 'A comprehensive department store bringing together physical products and digital software solutions in one place.',
       shopNow: 'Shop Now',
