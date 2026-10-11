@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Fuse from 'fuse.js';
 
 export default function Home() {
@@ -14,18 +14,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'date-newest' | 'name-asc'>('default');
   const [maxPriceFilter, setMaxPriceFilter] = useState<number>(1200);
 
-  // حالات مساعد الذكاء الاصطناعي العائم (AI Chatbot)
-  const [isAiOpen, setIsAiOpen] = useState(false);
-  const [chatInput, setChatInput] = useState('');
-  const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string }>>([
-    { 
-      sender: 'ai', 
-      text: 'أهلاً بك! أنا مساعد Shopando الذكي المتصل بـ Google Gemini عبر سيرفر Render الآمن. يمكنك سؤالي عن أي منتج أو نظام برمجي وسأجيبك فوراً.' 
-    }
-  ]);
-
   const scrollRef = useRef<HTMLDivElement>(null);
-  const chatBottomRef = useRef<HTMLDivElement>(null);
 
   // قاعدة بيانات متجر Shopando الشاملة (منتجات مادية وبرمجيات)
   const initialProducts = useMemo(() => [
@@ -150,45 +139,20 @@ export default function Home() {
       });
   }, [searchQuery, selectedCategory, maxPriceFilter, sortBy, lang, initialProducts, fuse]);
 
-  // دالة إرسال الرسائل عبر مسار الخادم الداخلي الآمن (/api/chat)
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-
-    const userText = chatInput.trim();
-    setMessages(prev => [...prev, { sender: 'user', text: userText }]);
-    setChatInput('');
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: userText }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'حدث خطأ في الاتصال بالخادم');
-      }
-
-      setMessages(prev => [...prev, { sender: 'ai', text: data.reply }]);
-
-    } catch (err: any) {
-      console.error(err);
-      setMessages(prev => [...prev, { 
-        sender: 'ai', 
-        text: `تعذر الاتصال: ${err?.message || 'تأكد من إعدادات المفتاح على السيرفر'}` 
-      }]);
-    }
-  };
-
-  // التمرير التلقائي لأسفل المحادثة
+  // التقليب التلقائي
   useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        if (scrollLeft + clientWidth >= scrollWidth - 10) {
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          scrollRef.current.scrollBy({ left: 260, behavior: 'smooth' });
+        }
+      }
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
 
   // النصوص باللغتين
   const t = {
@@ -201,7 +165,7 @@ export default function Home() {
       about: 'من نحن',
       cart: 'السلة',
       login: 'تسجيل الدخول',
-      heroTag: 'مساعد ذكي عائم متصل بـ Google Gemini عبر السيرفر',
+      heroTag: 'متجر إلكتروني شامل ومستقل',
       heroTitle1: 'تجوّل في عالم',
       heroDesc: 'منصة تسوق شاملة تجمع بين المنتجات المادية والعصرية، والحلول البرمجية والأنظمة الذكية بأفضل الأسعار وأعلى جودة.',
       shopNow: 'ابدأ التسوق الآن',
@@ -209,7 +173,7 @@ export default function Home() {
       eliteOffers: 'الأكثر طلباً (تمرير تلقائي)',
       autoUpdating: '⚡ يتحدث تلقائياً',
       allProducts: 'استكشف كافة الأقسام والمنتجات',
-      responsiveSub: 'جرب زر المساعد الذكي أسفل الشاشة للتحدث مع Gemini!',
+      responsiveSub: 'تصفح أحدث المنتجات والبرمجيات المتاحة بكل سهولة.',
       searchPlaceholder: '🔍 ابحث عن أي منتج (مثال: متجر، سماعه، ستره، قهوة...)...',
       sortBy: 'الترتيب حسب:',
       sortDefault: 'الافتراضي',
@@ -228,11 +192,6 @@ export default function Home() {
       privacy: 'الخصوصية',
       terms: 'الشروط والأحكام',
       support: 'الدعم الفني',
-      preview: 'معاينة',
-      aiChatTitle: 'مساعد Shopando الذكي',
-      aiChatSub: 'اسأل عن أي منتج وتأكد من مواصفاته عبر Gemini',
-      aiPlaceholder: 'اكتب سؤالك أو استفسارك هنا...',
-      send: 'إرسال',
     },
     en: {
       storeName: 'Shopando',
@@ -243,7 +202,7 @@ export default function Home() {
       about: 'About Us',
       cart: 'Cart',
       login: 'Sign In',
-      heroTag: 'Powered by Server-side Google Gemini Proxy',
+      heroTag: 'Comprehensive & Independent E-Commerce Store',
       heroTitle1: 'Explore the World of',
       heroDesc: 'A comprehensive department store bringing together physical products and digital software solutions in one place.',
       shopNow: 'Shop Now',
@@ -251,7 +210,7 @@ export default function Home() {
       eliteOffers: 'Popular & Featured (Auto-Scroll)',
       autoUpdating: '⚡ Live Auto-Scroll',
       allProducts: 'Explore All Departments & Items',
-      responsiveSub: 'Try the floating AI assistant button below to chat with Gemini!',
+      responsiveSub: 'Browse the latest available products and software effortlessly.',
       searchPlaceholder: '🔍 Search anything (e.g., pos, jacket, watch, coffee...)...',
       sortBy: 'Sort by:',
       sortDefault: 'Default',
@@ -270,11 +229,6 @@ export default function Home() {
       privacy: 'Privacy Policy',
       terms: 'Terms of Service',
       support: 'Technical Support',
-      preview: 'Preview',
-      aiChatTitle: 'Shopando AI Assistant',
-      aiChatSub: 'Ask about any product & verify specs via Gemini',
-      aiPlaceholder: 'Type your question here...',
-      send: 'Send',
     }
   }[lang];
 
@@ -292,21 +246,6 @@ export default function Home() {
       return () => mediaQuery.removeEventListener('change', updateTheme);
     }
   }, [theme]);
-
-  // التقليب التلقائي
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (scrollRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-        if (scrollLeft + clientWidth >= scrollWidth - 10) {
-          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          scrollRef.current.scrollBy({ left: 260, behavior: 'smooth' });
-        }
-      }
-    }, 3500);
-    return () => clearInterval(interval);
-  }, []);
 
   const categoriesList = [
     { key: 'all', labelAr: 'الكل', labelEn: 'All' },
@@ -591,82 +530,6 @@ export default function Home() {
         )}
 
       </main>
-
-      {/* زر المساعد الذكي العائم */}
-      <div className="fixed bottom-6 left-6 z-50">
-        {!isAiOpen ? (
-          <button 
-            onClick={() => setIsAiOpen(true)}
-            className="relative group flex items-center gap-3 px-5 py-3.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-orange-500 text-white font-bold shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 border border-white/20"
-          >
-            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-orange-400 animate-ping"></span>
-            <span className="text-xl">🤖</span>
-            <span className="text-xs sm:text-sm tracking-wide">مساعد Google Gemini</span>
-          </button>
-        ) : (
-          <div className={`w-[320px] sm:w-[380px] rounded-3xl border shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden transition-all duration-300 animate-in fade-in slide-in-from-bottom-5 ${
-            isDark ? 'bg-gray-950/95 border-white/10 text-gray-100 shadow-black/80' : 'bg-white/95 border-gray-200 text-gray-900 shadow-xl'
-          }`}>
-            
-            {/* رأس النافذة */}
-            <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="text-lg">🤖</span>
-                <div>
-                  <h4 className="font-black text-sm">{t.aiChatTitle}</h4>
-                  <span className="text-[10px] text-blue-200 block">{t.aiChatSub}</span>
-                </div>
-              </div>
-              <button 
-                onClick={() => setIsAiOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xs font-black transition"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* صندوق الرسائل */}
-            <div className="p-4 h-72 overflow-y-auto space-y-3 text-xs flex flex-col scrollbar-none">
-              {messages.map((msg, idx) => (
-                <div 
-                  key={idx} 
-                  className={`p-3 rounded-2xl max-w-[85%] leading-relaxed whitespace-pre-line font-medium ${
-                    msg.sender === 'user' 
-                      ? 'bg-blue-600 text-white self-end rounded-bl-none shadow-md' 
-                      : isDark 
-                        ? 'bg-white/10 text-gray-200 self-start rounded-br-none border border-white/5' 
-                        : 'bg-gray-100 text-gray-800 self-start rounded-br-none border border-gray-200'
-                  }`}
-                >
-                  {msg.text}
-                </div>
-              ))}
-              <div ref={chatBottomRef} />
-            </div>
-
-            {/* حقل الإدخال */}
-            <form onSubmit={handleSendMessage} className={`p-3 border-t flex items-center gap-2 ${
-              isDark ? 'border-white/10 bg-gray-900/50' : 'border-gray-200 bg-gray-50'
-            }`}>
-              <input 
-                type="text" 
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder={t.aiPlaceholder}
-                className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                  isDark ? 'bg-gray-900 border-white/10 text-white placeholder-gray-500' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
-                }`}
-              />
-              <button 
-                type="submit"
-                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition shrink-0"
-              >
-                {t.send}
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
 
       {/* Footer */}
       <footer className={`border-t py-6 mt-16 transition-colors duration-500 ${
