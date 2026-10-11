@@ -12,7 +12,6 @@ export async function POST(request) {
       );
     }
 
-    // تعليمات النظام الخاصة بمتجر Shopando كمتجر مستقل تماماً
     const systemInstruction = `
 أنت مساعد الذكاء الاصطناعي الرسمي لمتجر "Shopando" المستقل.
 دورك هو مساعدة الزوار والرد على استفساراتهم حول متجر Shopando ومنتجاته بشكل ودود، موثوق، ومحترف.
@@ -32,8 +31,9 @@ export async function POST(request) {
 - الإجابات والمساعدة والدعم يتم تقديمها حصراً وبشكل مباشر من فريق متجر Shopando.
     `;
 
+    // استخدام النموذج المستقر والسريع ذو الحد المرتفع: gemini-1.5-flash
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
