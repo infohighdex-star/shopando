@@ -31,9 +31,9 @@ export async function POST(request) {
 - الإجابات والمساعدة والدعم يتم تقديمها حصراً وبشكل مباشر من فريق متجر Shopando.
     `;
 
-    // استخدام النموذج المستقر والسريع ذو الحد المرتفع: gemini-1.5-flash
+    // استخدام النموذج المعتمد الحالي: gemini-2.0-flash
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
